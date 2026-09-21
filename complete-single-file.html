@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Cost Helper Chatbot</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        /* Medical Cost Chatbot Styles */
+
+        body {
+          margin: 0;
+          font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* Floating Chat Button */
+        .chatbot-float {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 50;
+        }
+
+        .chatbot-button {
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          color: white;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .chatbot-button:hover {
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          transform: scale(1.05);
+        }
+
+        /* Chat Window */
+        .chatbot-window {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          width: 384px;
+          height: 384px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          border: 1px solid #e5e7eb;
+          display: flex;
+          flex-direction: column;
+          z-index: 50;
+        }
+
+        /* Chat Header */
+        .chatbot-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .chatbot-header-content {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .chatbot-header-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .chatbot-title {
+          color: white;
+          font-weight: 600;
+          font-size: 14px;
+        }
+
+        .chatbot-subtitle {
+          color: rgba(219, 234, 254, 1);
+          font-size: 12px;
+        }
+
+        .chatbot-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .chatbot-action-button {
+          padding: 4px;
+          color: rgba(219, 234, 254, 1);
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
+
+        .chatbot-action-button:hover {
+          color: white;
+        }
+
+        /* Messages Area */
+        .chatbot-messages {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .chatbot-message {
+          display: flex;
+        }
+
+        .chatbot-message.bot {
+          justify-content: flex-start;
+        }
+
+        .chatbot-message.user {
+          justify-content: flex-end;
+        }
+
+        .chatbot-message-bubble {
+          max-width: 288px;
+          padding: 12px;
+          border-radius: 8px;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        /* Typing Indicator */
+        .chatbot-typing {
+          background: #EDEDED;
+          padding: 12px;
+          border-radius: 8px;
+        }
+
+        .chatbot-typing-dots {
+          display: flex;
+          gap: 4px;
+        }
+
+        .chatbot-typing-dots div {
+          width: 8px;
+          height: 8px;
+          background: #9ca3af;
+          border-radius: 50%;
+          animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .chatbot-typing-dots div:nth-child(1) {
+          animation-delay: -0.32s;
+        }
+
+        .chatbot-typing-dots div:nth-child(2) {
+          animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+          0%, 80%, 100% {
+            transform: scale(0);
+          }
+          40% {
+            transform: scale(1);
+          }
+        }
+
+        /* Quick Questions */
+        .chatbot-questions {
+          border-top: 1px solid #e5e7eb;
+          padding: 12px;
+        }
+
+        .chatbot-questions-label {
+          font-size: 12px;
+          color: #6b7280;
+          margin-bottom: 8px;
+        }
+
+        .chatbot-questions-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .chatbot-question-button {
+          width: 100%;
+          text-align: left;
+          padding: 8px;
+          font-size: 12px;
+          background: #f9fafb;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .chatbot-question-button:hover {
+          background: #f3f4f6;
+        }
+
+        .chatbot-chevron {
+          margin-left: auto;
+          color: #9ca3af;
+        }
+
+        /* Demo Context Switcher */
+        .chatbot-demo-switcher {
+          position: fixed;
+          top: 16px;
+          right: 16px;
+          z-index: 40;
+        }
+
+        .chatbot-demo-panel {
+          background: white;
+          padding: 12px;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+          border: 1px solid #e5e7eb;
+        }
+
+        .chatbot-demo-label {
+          font-size: 12px;
+          color: #6b7280;
+          margin-bottom: 12px;
+        }
+
+        .chatbot-demo-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .chatbot-demo-button {
+          padding: 8px 12px;
+          font-size: 12px;
+          border-radius: 4px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-align: left;
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .chatbot-demo-button:hover {
+          background: #e5e7eb;
+        }
+
+        .chatbot-demo-button.active {
+          color: white;
+        }
+
+        /* Demo Content Area */
+        .chatbot-demo-content {
+          min-height: 100vh;
+          padding: 32px;
+        }
+
+        .chatbot-demo-container {
+          max-width: 896px;
+          margin: 0 auto;
+        }
+
+        .chatbot-demo-card {
+          background: white;
+          padding: 32px;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .chatbot-demo-title {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 16px;
+        }
+
+        /* Page Screenshot Styles */
+        .chatbot-page-screenshot {
+          background: #f8f9fa;
+          border: 2px dashed #dee2e6;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-top: 16px;
+        }
+
+        .chatbot-screenshot-image {
+          width: 100%;
+          height: auto;
+          display: block;
+          border-radius: 6px;
+        }
+
+        .chatbot-screenshot-placeholder {
+          padding: 48px 24px;
+          text-align: center;
+          color: #6c757d;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .chatbot-placeholder-icon {
+          font-size: 48px;
+          opacity: 0.5;
+        }
+
+        .chatbot-placeholder-text {
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .chatbot-placeholder-subtext {
+          font-size: 14px;
+          opacity: 0.7;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+          .chatbot-window {
+            width: calc(100vw - 32px);
+            height: calc(100vh - 32px);
+            bottom: 16px;
+            right: 16px;
+          }
+          
+          .chatbot-demo-switcher {
+            top: 8px;
+            right: 8px;
+          }
+          
+          .chatbot-demo-content {
+            padding: 16px;
+          }
+          
+          .chatbot-demo-card {
+            padding: 16px;
+          }
+        }
+    </style>
+</head>
+<body>
+    <!-- React App Container -->
+    <div id="root"></div>
+
+    <!-- React Component and App -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const MedicalCostChatbot = () => {
+          const [isOpen, setIsOpen] = useState(false);
+          const [currentContext, setCurrentContext] = useState('procedure-selection');
+          const [conversationHistory, setConversationHistory] = useState([]);
+          const [isTyping, setIsTyping] = useState(false);
+          const messagesEndRef = useRef(null);
+
+          const colors = {
+            primary: '#362C67',
+            buttonColor: '#4F4FAB',
+            secondaryTeal: '#007CA3',
+            green: '#197310',
+            red: '#D63D0A',
+            orange: '#E55100',
+            white: '#FFFFFF',
+            gray: '#EDEDED',
+            lightBlue: '#F0F9FF'
+          };
+
+          // Custom Question Mark Icon Component
+          const QuestionIcon = ({ size = 16, className = "" }) => (
+            <svg 
+              width={size} 
+              height={size} 
+              viewBox="0 0 34 38.67" 
+              className={className}
+              style={{ display: 'block' }}
+            >
+              <circle cx="17" cy="17" r="17" fill="#fff"/>
+              <text 
+                x="17" 
+                y="30" 
+                textAnchor="middle"
+                fill="#362c67" 
+                fontSize="32" 
+                fontFamily="Roboto, sans-serif" 
+                fontWeight="700"
+              >
+                ?
+              </text>
+            </svg>
+          );
+
+          // Custom Chat Button Icon Component
+          const ChatBubbleIcon = ({ size = 24, className = "" }) => (
+            <svg 
+              width={size} 
+              height={size} 
+              viewBox="0 0 38 36.12" 
+              className={className}
+              style={{ display: 'block' }}
+            >
+              <ellipse cx="19" cy="15.38" rx="19" ry="15" fill="#fff"/>
+              <path 
+                d="M23.71,24.38c5.26,5.33,6.57,9,3.94,11-3.94,3,14.45-3,0-19-9.64-10.67-10.95-8-3.94,8Z" 
+                fill="#fff" 
+                fillRule="evenodd"
+              />
+              <text 
+                x="19" 
+                y="27.38" 
+                textAnchor="middle"
+                fill="#362c67" 
+                fontSize="32" 
+                fontFamily="Roboto, sans-serif" 
+                fontWeight="700"
+              >
+                ?
+              </text>
+            </svg>
+          );
+
+          // Simple icons (replacing lucide-react)
+          const X = ({ size }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m18 6-12 12M6 6l12 12"/>
+            </svg>
+          );
+
+          const ChevronRight = ({ size }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          );
+
+          const RotateCcw = ({ size }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+          );
+
+          // Context-specific question sets
+          const contextQuestions = {
+            'procedure-selection': {
+              title: "👋 Hi! I can help you find the right procedure.",
+              questions: [
+                {
+                  id: 'difference-procedures',
+                  text: "What's the difference between these procedures?",
+                  response: "Great question! Here are the main differences:\n\n🔹 **Biopsy (45380)** - Takes a tissue sample for testing\n🔹 **Polyp Removal (45385)** - Removes growths during the procedure\n🔹 **Diagnostic Exam (45378)** - Just looks around, no tissue taken\n🔹 **Lower Portion Exam (45330)** - Only examines the lower part\n\nThe codes determine what's covered and the cost."
+                },
+                {
+                  id: 'which-procedure',
+                  text: "How do I know which procedure I need?",
+                  response: "Your doctor will determine which procedure you need based on:\n\n✅ **Your symptoms**\n✅ **Medical history**\n✅ **What they're looking for**\n\nIf you're unsure, look for these clues:\n🔍 **Screening** = Usually diagnostic (45378)\n🩺 **Suspicious area** = May need biopsy (45380)\n🔬 **Known polyps** = Likely removal (45385)"
+                },
+                {
+                  id: 'cost-factors',
+                  text: "What affects the cost of these procedures?",
+                  response: "Several factors affect your cost:\n\n💰 **Your Insurance Plan**\n📍 **In-network vs Out-of-network provider**\n🏥 **Facility type** (hospital vs surgery center)\n📊 **Your deductible and copay**\n🎯 **Procedure complexity**\n\nTip: Always check if your provider is in-network first!"
+                }
+              ]
+            },
+            'cost-results': {
+              title: "💰 I can help explain these costs!",
+              questions: [
+                {
+                  id: 'network-difference',
+                  text: "What's the difference between in-network and out-of-network?",
+                  response: "Here's the key difference:\n\n✅ **In-Network ($907 avg)**\n• Provider has a contract with your insurance\n• Lower negotiated rates\n• Insurance covers more\n\n❌ **Out-of-Network ($2,819 avg)**\n• No contract with your insurance\n• You may pay full price\n• Limited or no coverage\n\n💡 **Tip:** Always check if your doctor is in-network before your procedure!"
+                },
+                {
+                  id: 'uninsured-cost',
+                  text: "How much would I pay if I'm uninsured?",
+                  response: "If you're uninsured, you'll typically pay the **Out-of-Network price: $2,819**\n\n💡 **Money-saving tips:**\n🔹 Ask about **cash discounts** (often 10-30% off)\n🔹 Request a **payment plan**\n🔹 Check if you qualify for **financial assistance**\n🔹 Compare prices at different facilities\n🔹 Consider **surgery centers** vs hospitals (often cheaper)"
+                },
+                {
+                  id: 'price-range',
+                  text: "Why is there such a big price range?",
+                  response: "The price range reflects real-world variation:\n\n📊 **In-Network: $560 - $2,302**\n📊 **Out-of-Network: $1,819 - $4,290**\n\n**Why the range?**\n🏥 Different facility types\n📍 Location within New York\n⭐ Provider experience/reputation\n🔧 Equipment and technology used\n📋 Additional services included\n\n💡 **Tip:** Ask for a detailed estimate before your procedure!"
+                },
+                {
+                  id: 'related-costs',
+                  text: 'What are "Related Costs"?',
+                  response: "Related costs are additional services you might need:\n\n🔬 **Pathology** - Lab analysis of tissue samples\n💉 **Anesthesia** - If sedation is used\n🏥 **Facility fees** - Room and equipment costs\n👩‍⚕️ **Assistant surgeon** - If needed\n📋 **Pre/post-op visits** - Follow-up care\n\n💰 **Total estimated costs:**\n• In-Network: **$3,008**\n• Out-of-Network: **$10,186**"
+                }
+              ]
+            }
+          };
+
+          const scrollToBottom = () => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          };
+
+          useEffect(() => {
+            scrollToBottom();
+          }, [conversationHistory]);
+
+          const simulateTyping = (delay = 1000) => {
+            setIsTyping(true);
+            setTimeout(() => setIsTyping(false), delay);
+          };
+
+          const addMessage = (message, isBot = false, delay = 0) => {
+            if (delay > 0) {
+              simulateTyping(delay);
+              setTimeout(() => {
+                setConversationHistory(prev => [...prev, { ...message, isBot, timestamp: Date.now() }]);
+              }, delay);
+            } else {
+              setConversationHistory(prev => [...prev, { ...message, isBot, timestamp: Date.now() }]);
+            }
+          };
+
+          const handleQuestionClick = (question) => {
+            addMessage({ text: question.text, questionId: question.id });
+            addMessage({ 
+              text: question.response,
+              isResponse: true 
+            }, true, 1500);
+          };
+
+          const resetConversation = () => {
+            setConversationHistory([]);
+          };
+
+          const openChat = () => {
+            setIsOpen(true);
+            if (conversationHistory.length === 0) {
+              addMessage({
+                text: contextQuestions[currentContext].title,
+                isGreeting: true
+              }, true, 500);
+            }
+          };
+
+          const currentQuestions = contextQuestions[currentContext].questions;
+
+          return (
+            <>
+              {/* Floating Chat Button */}
+              <div className="chatbot-float">
+                {!isOpen && (
+                  <button
+                    onClick={openChat}
+                    className="chatbot-button"
+                    style={{ backgroundColor: colors.buttonColor }}
+                  >
+                    <ChatBubbleIcon size={28} />
+                  </button>
+                )}
+              </div>
+
+              {/* Chat Window */}
+              {isOpen && (
+                <div className="chatbot-window">
+                  {/* Header */}
+                  <div className="chatbot-header" style={{ backgroundColor: colors.primary }}>
+                    <div className="chatbot-header-content">
+                      <div className="chatbot-header-icon">
+                        <QuestionIcon size={20} />
+                      </div>
+                      <div>
+                        <div className="chatbot-title">Cost Helper</div>
+                        <div className="chatbot-subtitle">Here to help explain costs</div>
+                      </div>
+                    </div>
+                    <div className="chatbot-header-actions">
+                      <button
+                        onClick={resetConversation}
+                        className="chatbot-action-button"
+                        title="Reset conversation"
+                      >
+                        <RotateCcw size={16} />
+                      </button>
+                      <button
+                        onClick={() => setIsOpen(false)}
+                        className="chatbot-action-button"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Messages Area */}
+                  <div className="chatbot-messages">
+                    {conversationHistory.map((message, index) => (
+                      <div key={index} className={`chatbot-message ${message.isBot ? 'bot' : 'user'}`}>
+                        <div
+                          className="chatbot-message-bubble"
+                          style={{
+                            backgroundColor: message.isBot ? colors.gray : colors.secondaryTeal,
+                            color: message.isBot ? '#374151' : 'white'
+                          }}
+                        >
+                          {message.text.split('\n').map((line, lineIndex) => (
+                            <div key={lineIndex}>
+                              {line.includes('**') ? (
+                                <span dangerouslySetInnerHTML={{
+                                  __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                }} />
+                              ) : (
+                                line
+                              )}
+                              {lineIndex < message.text.split('\n').length - 1 && <br />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {isTyping && (
+                      <div className="chatbot-message bot">
+                        <div className="chatbot-typing">
+                          <div className="chatbot-typing-dots">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Quick Questions */}
+                  <div className="chatbot-questions">
+                    <div className="chatbot-questions-label">Choose a question:</div>
+                    <div className="chatbot-questions-list">
+                      {currentQuestions.slice(0, 3).map((question, index) => (
+                        <button
+                          key={question.id}
+                          onClick={() => handleQuestionClick(question)}
+                          className="chatbot-question-button"
+                        >
+                          <span>{question.text}</span>
+                          <ChevronRight size={10} className="chatbot-chevron" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Demo Context Switcher */}
+              <div className="chatbot-demo-switcher">
+                <div className="chatbot-demo-panel">
+                  <div className="chatbot-demo-label">Demo: Switch Page Context</div>
+                  <div className="chatbot-demo-buttons">
+                    <button
+                      onClick={() => {
+                        setCurrentContext('procedure-selection');
+                        resetConversation();
+                      }}
+                      className={`chatbot-demo-button ${currentContext === 'procedure-selection' ? 'active' : ''}`}
+                      style={{
+                        backgroundColor: currentContext === 'procedure-selection' ? colors.primary : undefined
+                      }}
+                    >
+                      Procedure Selection
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentContext('cost-results');
+                        resetConversation();
+                      }}
+                      className={`chatbot-demo-button ${currentContext === 'cost-results' ? 'active' : ''}`}
+                      style={{
+                        backgroundColor: currentContext === 'cost-results' ? colors.primary : undefined
+                      }}
+                    >
+                      Cost Results
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Demo Content Area */}
+              <div className="chatbot-demo-content" style={{ backgroundColor: colors.gray }}>
+                <div className="chatbot-demo-container">
+                  <div className="chatbot-demo-card">
+                    <h1 className="chatbot-demo-title" style={{ color: colors.primary }}>
+                      Medical Cost Helper Chatbot Demo
+                    </h1>
+                    
+                    {/* Page Screenshot */}
+                    <div className="chatbot-page-screenshot">
+                      <img 
+                        src={`${currentContext}-page.png`}
+                        alt={`${currentContext.replace('-', ' ')} page screenshot`}
+                        className="chatbot-screenshot-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div className="chatbot-screenshot-placeholder" style={{ display: 'none' }}>
+                        <div className="chatbot-placeholder-icon">📷</div>
+                        <div className="chatbot-placeholder-text">
+                          Add screenshot: <strong>{currentContext}-page.png</strong>
+                        </div>
+                        <div className="chatbot-placeholder-subtext">
+                          Place your page screenshot in the same folder as this HTML file
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        };
+
+        const App = () => {
+            return <MedicalCostChatbot />;
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
